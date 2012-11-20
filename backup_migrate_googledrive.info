@@ -1,0 +1,10 @@
+name = Backup and Migrate Google Drive
+description = "Allows Back and Migrate to save the backup files to a google drive account"
+core = 7.x
+dependencies[] = backup_migrate
+package = Backup and Migrate
+
+files[] = backup_migrate_googledrive.module
+files[] = backup_migrate_googledrive.install
+files[] = destinations_googledrive.inc
+files[] = backup_migrate_googledrive.info

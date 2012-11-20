@@ -1,0 +1,139 @@
+<?php
+
+/**
+ * @file backup_migrate_googledrive.module
+ *
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function backup_migrate_googledrive_menu() {
+  $items = array();
+  $items['admin/config/system/backup_migrate/googledrive'] = array(
+    'title' => 'Google Drive',
+    'description' => 'Set up Google Drive backups.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('backup_migrate_googledrive_settings'),
+    'access arguments' => array('administer backup and migrate'),
+    'weight' => 11,
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['backup_migrate_googledrive/oauth2callback'] = array(
+    'title' => 'Oauth2 callback',
+    'description' => '',
+    'page callback' => 'backup_migrate_googledrive_oauth2callback',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  
+  return $items;
+}
+
+/**
+ * Implements hook_backup_migrate_destination_types().
+ */
+function backup_migrate_googledrive_backup_migrate_destination_types() {
+  $destination_types = array();
+  
+  $destination_types['googledrive'] = array(
+    'type_name' => t('Google Drive'),
+    'description' => t('Save the backup files to a !link account.', array('!link' => l(t('Google Drive'), 'https://drive.google.com/'))),
+    'file' => drupal_get_path('module', 'backup_migrate_googledrive') . '/destinations.googledrive.inc',
+    'class' => 'backup_migrate_destination_googledrive',
+    'can_create' => TRUE,
+  );
+
+  return $destination_types;
+}
+
+/**
+ * Manu callback for google oauth2callback
+ */
+function backup_migrate_googledrive_oauth2callback() {
+  watchdog('backup_migrate_googledrive', print_r($_GET, TRUE) . '<br />' . print_r($_POST, TRUE));
+  return 'This is a callback page.';
+}
+
+/**
+ *
+ */
+function backup_migrate_googledrive_settings($form, $form_state) {
+  //If there is no access token generated yet, prompt the user to create one
+  if (!variable_get('backup_migrate_googledrive_accesstoken', '')) {
+    drupal_set_message(t('Please enter the required information, then press the "Generate new Access token" button to make a new access token.'), 'warning');
+  }
+
+  $form = array();
+  $form['backup_migrate_googledrive_clientid'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Client ID'),
+    '#description' => t('Please enter your Google API Client ID.'),
+    '#default_value' => variable_get('backup_migrate_googledrive_clientid', ''),
+    '#required' => TRUE,
+  );
+
+  $form['backup_migrate_googledrive_clientsecret'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Client Secret'),
+    '#description' => t('Please enter your Google API Client Secret.'),
+    '#default_value' => variable_get('backup_migrate_googledrive_clientsecret', ''),
+    '#required' => TRUE,
+  );
+
+  $form['backup_migrate_googledrive_accesstoken'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Access token'),
+    '#description' => t('Please enter your Google API Access token.'),
+    '#default_value' => variable_get('backup_migrate_googledrive_accesstoken', ''),
+    '#required' => FALSE,
+  );
+
+  $form['actions']['backup_migrate_googledrive_regenerate'] = array(
+    '#type' => 'submit',
+    '#value' => t('Generate new Access token'),
+    '#weight' => 10,
+    '#name' => 'backup_migrate_googledrive_regenerate',
+  );
+
+  $form['#submit'][] = 'backup_migrate_googledrive_settings_regenerate';
+
+  return system_settings_form($form);
+}
+
+/**
+ *
+ */
+function backup_migrate_googledrive_settings_regenerate($form, $form_state) {
+  if ($form_state['clicked_button']['#name'] == 'backup_migrate_googledrive_regenerate') {
+    $path = _get_google_api_php_client_path();
+    require_once $path . '/src/Google_Client.php';
+    require_once $path . '/src/contrib/Google_DriveService.php';
+
+    $client_id = variable_get('backup_migrate_googledrive_clientid', '');
+    $client_secret = variable_get('backup_migrate_googledrive_clientsecret', '');
+    if (!$client_id or !$client_secret) {
+      drupal_set_message("Please fill required information", 'error');
+      return;
+    }
+
+    $client = new Google_Client();
+    $client->setClientId($client_id);
+    $client->setClientSecret($client_secret);
+    $client->setRedirectUri('http://www.hejazee.ir/' . 'backup_migrate_googledrive/oauth2callback');
+    $client->setScopes(array('https://www.googleapis.com/auth/drive'));
+
+    $service = new Google_DriveService($client);
+
+    $authUrl = $client->createAuthUrl();
+    drupal_goto($authUrl);
+  }
+}
+
+/**
+ * Get the path to google-api-php-client
+ */
+function _get_google_api_php_client_path() {
+  return 'sites/all/libraries/google-api-php-client';
+}

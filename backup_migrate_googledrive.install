@@ -8,25 +8,21 @@
 function backup_migrate_googledrive_requirements($phase) {
   $requirements = array();
   $t = get_t();
-
-  $requirements['googledrive'] = array(
-    'title' => $t('Google API PHP Client'),
-  );
-  
-  if (!file_exists('sites/all/libraries/google-api-php-client/src/Google_Client.php')) {
-    $requirements['googledrive']['value'] = $t('Missing');
-    $requirements['googledrive']['description'] = $t('Google API PHP Client library is missing, please download it from !link and place it at !directory',
-      array(
-        '!link' => '<a href="http://code.google.com/p/google-api-php-client/">http://code.google.com/p/google-api-php-client/</a>',
-        '!directory' => 'sites/all/libraries/google-api-php-client',
-      )
-    );
-    $requirements['googledrive']['severity'] = REQUIREMENT_ERROR;
+  if ($phase == 'install') {
+    if (!file_exists('sites/all/libraries/google-api-php-client/autoload.php')) {
+      $requirements['googledrive']['value'] = $t('Missing');
+      $requirements['googledrive']['description'] = $t('Google API PHP Client library is missing, please download it from !link and place it at !directory',
+        array(
+          '!link' => '<a href="https://github.com/google/google-api-php-client.git/">git clone https://github.com/google/google-api-php-client.git </a>',
+          '!directory' => 'sites/all/libraries/google-api-php-client',
+        )
+      );
+      $requirements['googledrive']['severity'] = REQUIREMENT_ERROR;
+    }
+    else {
+      $requirements['googledrive']['value'] = $t('Exists');
+      $requirements['googledrive']['severity'] = REQUIREMENT_OK;
+    }
   }
-  else {
-    $requirements['googledrive']['value'] = $t('Exists');
-    $requirements['googledrive']['severity'] = REQUIREMENT_OK;
-  }
-  
   return $requirements;
 }

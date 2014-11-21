@@ -1,5 +1,5 @@
 name = Backup and Migrate Google Drive
-description = "Allows Back and Migrate to save the backup files to a google drive account"
+description = "Allows Backup and Migrate to use a Google Drive account"
 core = 7.x
 dependencies[] = backup_migrate
 package = Backup and Migrate

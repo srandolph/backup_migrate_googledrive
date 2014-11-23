@@ -15,7 +15,7 @@ class backup_migrate_destination_googledrive extends backup_migrate_destination_
   var $dropbox = NULL;
 
   /**
-   * Save to to the Dropbox destination.
+   * Save to to the Google Drive destination.
    */
   function save_file($file, $settings) {
     $dropbox = $this->dropbox_object();
@@ -32,7 +32,7 @@ class backup_migrate_destination_googledrive extends backup_migrate_destination_
     }
     catch (Exception $e) {
       watchdog('backup_migrate',
-               'There was a problem when we tried to save the file to Dropbox, the error message was: !error',
+               'There was a problem when we tried to save the file to Google Drive, the error message was: !error',
                array('!error' => $e->getMessage()),
                WATCHDOG_ERROR);
       return FALSE;
@@ -49,19 +49,11 @@ class backup_migrate_destination_googledrive extends backup_migrate_destination_
     $form['scheme']['#value'] = 'https';
     $form['host']['#type'] = 'value';
     $form['host']['#value'] = 'www.dropbox.com';
-    $form['path']['#description'] = 'A relative folder inside your Dropbox account';
-    $form['user']['#title'] = 'Dropbox E-mail';
-    $form['pass']['#title'] = 'Dropbox Password';
+    $form['path']['#description'] = 'A relative folder inside your Google Drive account';
+    $form['user']['#title'] = 'Google E-mail';
+    $form['pass']['#title'] = 'Google Password';
 
     return $form;
   }
 
-  function dropbox_object() {
-    require_once 'sites/all/libraries/DropboxUploader/DropboxUploader.php';
-    if (!$this->dropbox) {
-      $this->dropbox = new DropboxUploader($this->dest_url['user'], $this->dest_url['pass']);
-      $this->dropbox->setCaCertificateFile('./'. drupal_get_path('module', 'backup_migrate_dropbox') .'/ThawtePremiumServerCA.crt');
-    }
-    return $this->dropbox;
-  }
 }
